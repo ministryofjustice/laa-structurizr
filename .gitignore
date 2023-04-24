@@ -1,0 +1,6 @@
+# structurizr generated files
+workspace.json
+/structurizr/*
+
+# system files
+.DS_Store
