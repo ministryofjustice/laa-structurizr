@@ -60,18 +60,27 @@ workspace "LAA digital" {
             }
           }
 
+          group "Civil help" {
+            cla = softwareSystem "CLA" "Web service provided to the general public in England and Wales where users can obtain free legal advice from specialist legal providers relating to a range of Civil matters"
+            fala = softwareSystem "Find a Legal Advisor (FALA)" "Web service used to search for a legal adviser or family mediator with a legal aid contract in England and Wales."
+            laalaa = softwareSystem "Legal Aid Agency Legal Adviser API (LAALAA)" "API for looking up legal advisers, backed by a Postgres database."
+          }
+
           group "Eligibility" {
             cfe = softwareSystem "CFE" "A service for checking financial eligibility for legal aid"
             benefitChecker = softwareSystem "Benefit Checker" "An interface to the DWP, providing access to the benefit entitlement of applicants"
             hmrcInterface = softwareSystem "HMRC Interface" "An interface between the LAA and HMRC providing access to income, fraud and debt data"
           }
 
-          group "Providers" {
+          group "Providers and identity" {
             portal = softwareSystem "LAA Online Portal" "Single sign on for the LAA"
             cwa = softwareSystem "CWA" "CWA is a billing system that contains all provider contracts and schedules" {
               cwaEbs = container "EBS" "Oracle EBS 11i application"
               cwaDb = container "CWA DB" "Oracle database"
+
+              cwaEbs -> cwaDb "Connects to"
             }
+            azure = softwareSystem "MOJ AzureAD" "MOJ instance of AzureAd"
           }
 
           group "Criminal applications" {
@@ -83,6 +92,7 @@ workspace "LAA digital" {
               maatApp -> maatDb "Connects to"
               maatApi -> maatDb "Accesses and stores Court information"
             }
+            eforms = softwareSystem "EForms" "Electronic form submission. Historical paper forms digitised and made available to legal providers. Includes applying for and billing for types of criminal legal aid."
             nolasa = softwareSystem "NoLASA" "Is a micro-service that reads cases that have been marked as 'not-on-libra' from the MLRA database once a day and auto-searches the HMCTS Libra system"
             infox = softwareSystem "InfoX" "Adaptor to the HMCTS Libra system"
             mlra = softwareSystem "MLRA" "System provides an interface to HMCTS' Libra system that contains data about magistrates court cases, also manages representation orders for criminal legal aid"
@@ -94,6 +104,29 @@ workspace "LAA digital" {
               cdaApi -> cdaDb "Connects to"
               cdaApi -> cdaSqs "Adds events to process by other systems"
             }
+
+            eforms -> maatDb "Submits applications for criminal legal aid [HUB]"
+            maatDb -> eforms "Sends legal aid decisions and status updates [HUB]"
+
+            crimeApply = softwareSystem "Crime Apply" "Web service for providers to apply for criminal legal aid on behalf of clients" {
+              crimeApplyApp = container "Crime Apply" "Ruby on Rails application"
+              crimeApplyDb = container "Crime Apply DB" "Postgres"
+            }
+
+            crimeReview = softwareSystem "Crime Review" "Web service for caseworkers to review applications for criminal legal aid" {
+              crimeReviewApp = container "Crime Review" "Ruby on Rails application"
+              crimeReviewDb = container "Crime Review DB" "Postgres"
+            }
+
+            crimeDatastore = softwareSystem "Criminal Applications datastore" "Data service for storing submitted criminal legal aid applications" {
+              crimeDatastoreApi = container "API" "Ruby on Rails application"
+              crimeDatastoreDb = container "Datastore DB" "Postgres"
+            }
+
+            crimeApply -> crimeDatastoreApi "Submits applications for criminal legal aid"
+            crimeReview -> crimeDatastoreApi "Fetches applications for criminal legal aid"
+            crimeDatastoreApi -> crimeDatastoreDb "Connects to"
+            maatApi -> crimeDatastoreApi "Fetches applications for criminal legal aid"
           }
 
           group "Criminal billing" {
@@ -143,28 +176,52 @@ workspace "LAA digital" {
             vcd -> cdaApi "Calls to fetch court data from HMCTS Common Platform"
           }
 
+          group "Data" {
+            eric = softwareSystem "ERIC" "Provides financial reporting based on MI"
+            edw = softwareSystem "EDW" "Data warehouse for MI"
+
+            edw -> eric "Pushes financial data from CWA, CIS, CCMS"
+          }
         }
 
-        group "External" {
-          geckoboard = softwareSystem "Geckoboard" {
+        geckoboard = softwareSystem "Geckoboard" {
+          tags "External"
+        }
+
+        osPlaces = softwareSystem "OS Places API" {
+          tags "External"
+        }
+
+        bankHolidaysApi = softwareSystem "Bank Holidays API" {
+          tags "External"
+        }
+
+        group "Government" {
+          dwp = softwareSystem "DWP" {
             tags "External"
           }
-          trueLayer = softwareSystem "TrueLayer" {
+          hmrc = softwareSystem "HMRC" {
             tags "External"
           }
           notify = softwareSystem "Gov Notify" {
             tags "External"
           }
-          osPlaces = softwareSystem "OS Places API" {
-            tags "External"
+
+          group "HMCTS" {
+            libra = softwareSystem "Libra" "Magistrates court system run by HMCTS" {
+              tags "External"
+            }
+            xhibit = softwareSystem "Xhibit" "Crown court system run by HMCTS" {
+              tags "External"
+            }
+            commonPlatform = softwareSystem "Common Platform" "Court system covering both magistrates and crown courts, replacing Libra and Xhibit" {
+              tags "External"
+            }
           }
-          bankHolidaysApi = softwareSystem "Bank Holidays API" {
-            tags "External"
-          }
-          dwp = softwareSystem "DWP" {
-            tags "External"
-          }
-          hmrc = softwareSystem "HMRC" {
+        }
+
+        group "Banking" {
+          trueLayer = softwareSystem "TrueLayer" {
             tags "External"
           }
           allPay = softwareSystem "AllPay" "Direct Debit payment processor" {
@@ -176,31 +233,25 @@ workspace "LAA digital" {
           barclaycard = softwareSystem "Barclaycard" "Sends payment requests to" {
             tags "External"
           }
+          banks = softwareSystem "Bank accounts" {
+            tags "External"
+          }
+        }
+
+        group "Documents" {
           xerox = softwareSystem "Xerox" "Correspondence and Cheque printing and posting" {
             tags "External"
           }
           northgate = softwareSystem "Northgate" "Document scanning, via postal service, and storage service" {
             tags "External"
           }
-          marstons = softwareSystem "Martsons" "Debt collections agency" {
-            tags "External"
-          }
-          banks = softwareSystem "Bank accounts" {
-            tags "External"
-          }
-          providerCms = softwareSystem "Provider CMS" "Provider system for managing cases" {
-            tags "External"
-          }
-          libra = softwareSystem "Libra" "Magistrates court system run by HMCTS" {
-            tags "External"
-          }
-          xhibit = softwareSystem "Xhibit" "Crown court system run by HMCTS" {
-            tags "External"
-          }
-          commonPlatform = softwareSystem "Common Platform" "Court system covering both magistrates and crown courts, replacing Libra and Xhibit" {
-            tags "External"
-          }
+        }
 
+        marstons = softwareSystem "Martsons" "Debt collections agency" {
+          tags "External"
+        }
+        providerCms = softwareSystem "Provider CMS" "Provider system for managing cases" {
+          tags "External"
         }
 
         benefitChecker -> dwp "Relays queries to"
@@ -213,6 +264,7 @@ workspace "LAA digital" {
         applyApp -> benefitChecker "Checks if applicant receives passported benefit through [SOAP]"
         applyApp -> portal "Authenticates users through [SAML]"
         applyApp -> hmrcInterface "Checks applicants HMRC employment information through"
+        hmrcInterface -> hmrc "Requests income data from"
 
         applyApp -> geckoboard "Sends metrics to"
         applyApp -> trueLayer "Gets applicant bank information from"
@@ -220,10 +272,10 @@ workspace "LAA digital" {
         applyApp -> osPlaces "Gets address data from"
         applyApp -> bankHolidaysApi "Gets bank holiday dates from"
 
-        citizen -> applyApp "Applies for legal aid using"
+        citizen -> applyApp "Applies for civil legal aid using"
         citizen -> applyApp "Gives bank access authorisation to"
         citizen -> eckoh "Makes payment by giving card details"
-        provider -> applyApp "Fills legal aid application through"
+        provider -> applyApp "Fills civil legal aid application through"
         notify -> citizen "Sends email to"
         provider -> pui "Fills legal aid application and submits billing claims through"
         civilMeansCaseworker -> oracleForms "Reviews legal aid applications and makes decisions on means"
@@ -239,10 +291,17 @@ workspace "LAA digital" {
         criminalCaseworker -> maatApp "Assesses means and interests of justice for criminal legal aid applications"
         criminalCaseworker -> mlra "Reviews magistrates court outcomes and notifies of legal aid decisions, manages representation orders"
         criminalCaseworker -> vcd "Views court data"
+        provider -> eforms "Fills criminal legal aid application through"
+        provider -> eforms "Submits bills for certain types of criminal legal aid through"
+        criminalCaseworker -> eforms "Reviews applications for criminal legal aid in"
+        billingCaseworker -> eforms "Reviews certain types of claim for criminal legal aid in"
 
-        cwaEbs -> cwaDb "Connects to"
         cwaDb -> portal "Syncs user authentication details"
         cwaDb -> ccmsDb "Syncs user data [HUB]"
+        cwaDb -> eforms "Sends data about legal aid providers [HUB]"
+        cwaDb -> eric "Pushes provider details [HUB]"
+        cwaDb -> cisDb "Pushes claims and provider details [HUB]"
+        edw -> cwaDb "Copies data from"
 
         pui -> portal "Authenticates provider users through [SAML]"
         oracleForms -> portal "Authenticates internal users through [SAML]"
@@ -261,6 +320,7 @@ workspace "LAA digital" {
         cisDb -> ccr "Takes claims from [HUB]"
         cisDb -> cclf "Takes claims from [HUB]"
         cis -> ccmsDb "Pushes CIS invoices approved for payment and, after payment, updates status of invoices in CIS [HUB]"
+        edw -> cisDb "Copies data from"
 
         cclfDb -> maatDb "Loads defendant and court outcome data from [HUB]"
         ccrDb -> maatDb "Loads defendant and court outcome data from [HUB]"
@@ -269,6 +329,8 @@ workspace "LAA digital" {
         cdaApi -> maatApi "Uses MAAT API to validate MAAT IDs before sending requests to Common Platform"
         cdaApi -> commonPlatform "Uses APIs to search & retreive case information, marks cases to receive notifications"
         maatApp -> benefitChecker "Check applicant benefits status [SOAP]"
+        eforms -> portal "Authenticates users through [SAML]"
+        eforms -> benefitChecker "Checks if applicant receives passported benefit through [SOAP]"
 
         mlra -> maatDb "Connects to"
         mlra -> infox "Searches cases in Libra and sends legal aid status to Libra"
@@ -276,6 +338,10 @@ workspace "LAA digital" {
         infox -> libra "Sends legal aid status, fetches court outcomes"
         infox -> nolasa "Sends cases that cannot be found yet on Libra for auto-rechecking"
         nolasa -> infox "Searches to see if cases can be found in Libra at set intervals"
+
+        crimeApplyApp -> portal "Authenticates provider users through [SAML]"
+        crimeReviewApp -> azure "Authenticates caseworker users through"
+        crimeApplyApp -> benefitChecker "Checks if applicant receives passported benefit through [SOAP]"
     }
 
     views {
@@ -295,6 +361,31 @@ workspace "LAA digital" {
         }
 
         container ccms "CCMS" {
+            include *
+            autoLayout
+        }
+
+        systemContext cccd "cccdContext" {
+            include *
+            autoLayout
+        }
+
+        container cccd "CCCD" {
+            include *
+            autoLayout
+        }
+
+        systemContext maat "maatContext" {
+            include *
+            autoLayout
+        }
+
+        container maat "MAAT" {
+            include *
+            autoLayout
+        }
+
+        systemContext crimeApply "CrimeApplyContext" {
             include *
             autoLayout
         }
