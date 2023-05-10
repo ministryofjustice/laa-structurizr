@@ -6,7 +6,7 @@ workspace "LAA digital" {
         }
 
         provider = person "Legal Aid provider"
-        citizen = person "Citizen" "A member of the public in England or Wales"
+        citizen = person "Citizen" "A member of the public in England or Wales..."
         criminalCaseworker = person "Criminal caseworker" "A caseworker who manages applications for criminal legal aid"
         civilMeansCaseworker = person "Civil means caseworker" "A caseworker who assesses civil legal aid applications for means"
         civilMeritsCaseworker = person "Civil merits caseworker" "A caseworker who assesses civil legal aid applications for merits"
@@ -87,15 +87,22 @@ workspace "LAA digital" {
             maat = softwareSystem "MAAT" "System used to assess criminal legal aid applications" {
               maatApp = container "MAAT" "Java app"
               maatDb = container "MAAT DB" "An Oracle Database storing case information from HMCTS and decisions regarding Legal Aid Applications"
-              maatApi = container "MAAT API" "An API providing an interface to the MAAT DB"
+
+              //test for plantUML injection
+              maatApi = container "MAAT API" "An API providing an interface to the MAAT DB"{
+                        component1 = component "Component 1"
+              }
+
 
               maatApp -> maatDb "Connects to"
               maatApi -> maatDb "Accesses and stores Court information"
+
             }
             eforms = softwareSystem "EForms" "Electronic form submission. Historical paper forms digitised and made available to legal providers. Includes applying for and billing for types of criminal legal aid."
             nolasa = softwareSystem "NoLASA" "Is a micro-service that reads cases that have been marked as 'not-on-libra' from the MLRA database once a day and auto-searches the HMCTS Libra system"
             infox = softwareSystem "InfoX" "Adaptor to the HMCTS Libra system"
             mlra = softwareSystem "MLRA" "System provides an interface to HMCTS' Libra system that contains data about magistrates court cases, also manages representation orders for criminal legal aid"
+
             cda = softwareSystem "CDA" "Adaptor to the HMCTS Common Platform" {
               cdaSqs = container "CDA SQS" "Used for pushing notifications from HMCTS to other LAA systems"
               cdaApi = container "CDA" "Ruby on Rails API to allow LAA access Common Platform data"
@@ -105,6 +112,9 @@ workspace "LAA digital" {
               cdaApi -> cdaSqs "Adds events to process by other systems"
             }
 
+
+            //test for plantUML injection
+            eforms -> component1 "test for plantUML injection"
             eforms -> maatDb "Submits applications for criminal legal aid [HUB]"
             maatDb -> eforms "Sends legal aid decisions and status updates [HUB]"
 
@@ -345,6 +355,13 @@ workspace "LAA digital" {
     }
 
     views {
+
+        //test for plantUML injection
+        properties {
+            "mermaid.url" "https://mermaid.ink"
+            "mermaid.format" "svg"
+        }
+
         systemContext apply "ApplyContext" {
             include *
             autoLayout
@@ -375,6 +392,43 @@ workspace "LAA digital" {
             autoLayout
         }
 
+        systemContext cda "cdacontext" {
+            include *
+            autoLayout
+        }
+
+        container cda "CDA" {
+            include *
+            autoLayout
+        }
+
+        systemContext vcd "vcdContext" {
+            include *
+            autoLayout
+        }
+
+
+        systemContext mlra "mlraContext" {
+            include *
+            autoLayout
+        }
+
+        systemContext infox "infoxContext" {
+            include *
+            autoLayout
+        }
+
+        systemContext nolasa "nolasaContext" {
+            include *
+            autoLayout
+        }
+
+
+        systemContext eforms "eformsContext" {
+            include *
+            autoLayout
+        }
+
         systemContext maat "maatContext" {
             include *
             autoLayout
@@ -385,9 +439,28 @@ workspace "LAA digital" {
             autoLayout
         }
 
+        //test for plantUML injection
+        component maatApi {
+            include *
+            autoLayout lr
+        }
+
+
         systemContext crimeApply "CrimeApplyContext" {
             include *
             autoLayout
+        }
+
+        systemContext crimeReview "CrimeReviewContext" {
+            include *
+            autoLayout
+        }
+
+
+        //test for plantUML injection
+        image component1 {
+            mermaid https://raw.githubusercontent.com/structurizr/dsl/master/docs/cookbook/image-view/component1.mmd
+            title "Class diagram for Component1"
         }
 
         systemLandscape landscape {
