@@ -60,6 +60,7 @@ workspace "LAA digital" {
             }
           }
 
+          
           group "Civil help" {
             cla = softwareSystem "CLA" "Web service provided to the general public in England and Wales where users can obtain free legal advice from specialist legal providers relating to a range of Civil matters"
             fala = softwareSystem "Find a Legal Advisor (FALA)" "Web service used to search for a legal adviser or family mediator with a legal aid contract in England and Wales."
@@ -83,7 +84,12 @@ workspace "LAA digital" {
             azure = softwareSystem "MOJ AzureAD" "MOJ instance of AzureAd"
           }
 
-          group "Criminal applications" {
+
+          group "OS Places" {
+            postcodeapi = softwareSystem "Ordnance survey Postcodes lookup API"
+          }
+
+          1 = group "Criminal applications" {
             maat = softwareSystem "MAAT" "System used to assess criminal legal aid applications" {
               maatApp = container "MAAT" "Java app"
               maatDb = container "MAAT DB" "An Oracle Database storing case information from HMCTS and decisions regarding Legal Aid Applications"
@@ -122,12 +128,15 @@ workspace "LAA digital" {
               crimeDatastoreApi = container "API" "Ruby on Rails application"
               crimeDatastoreDb = container "Datastore DB" "Postgres"
             }
-
-            crimeApply -> crimeDatastoreApi "Submits applications for criminal legal aid"
-            crimeReview -> crimeDatastoreApi "Fetches applications for criminal legal aid"
+                crimeApplyApp -> crimeApplyDb "Connects to"
+                crimeReviewApp -> crimeReviewDb "Connects to"
+             
+            crimeApplyApp -> crimeDatastoreApi "Submits applications for criminal legal aid"
+            crimeReviewApp -> crimeDatastoreApi "Fetches applications for criminal legal aid"
             crimeDatastoreApi -> crimeDatastoreDb "Connects to"
             maatApi -> crimeDatastoreApi "Fetches applications for criminal legal aid"
           }
+
 
           group "Criminal billing" {
             ccr = softwareSystem "CCR" "Web service that manages advocate fee claims" {
@@ -338,11 +347,17 @@ workspace "LAA digital" {
         infox -> libra "Sends legal aid status, fetches court outcomes"
         infox -> nolasa "Sends cases that cannot be found yet on Libra for auto-rechecking"
         nolasa -> infox "Searches to see if cases can be found in Libra at set intervals"
-
+        
         crimeApplyApp -> portal "Authenticates provider users through [SAML]"
         crimeReviewApp -> azure "Authenticates caseworker users through"
         crimeApplyApp -> benefitChecker "Checks if applicant receives passported benefit through [SOAP]"
+        crimeApplyApp -> postcodeapi "Gets address data for a client [REST]"
+        crimeReviewApp -> crimeDatastoreApi "Fetches applications for criminal legal aid"
+           crimeDatastoreApi -> crimeDatastoreDb "Connects to"
     }
+
+    
+
 
     views {
         systemContext apply "ApplyContext" {
@@ -390,7 +405,46 @@ workspace "LAA digital" {
             autoLayout
         }
 
+      
+
+        systemContext crimeReview "CrimeReviewContext" {
+            include *
+            autoLayout
+        }
+
         systemLandscape landscape {
+            include *
+            autoLayout
+        }
+         dynamic crimeapply "CrimeApps" "Summarises how the crime apply application talks to crime review and MAAT" {
+            crimeApplyApp -> portal "Authenticates provider users through [SAML]"
+        crimeReviewApp -> azure "Authenticates caseworker users through"
+        crimeApplyApp -> benefitChecker "Checks if applicant receives passported benefit through [SOAP]"
+        crimeApplyApp -> postcodeapi "Gets address data for a client [REST]"
+        crimeApplyApp -> crimeDatastoreApi "Submits applications for criminal legal aid"
+            crimeReviewApp -> crimeDatastoreApi "Fetches applications for criminal legal aid"
+           crimeDatastoreApi -> crimeDatastoreDb "Connects to"
+            maatApi -> crimeDatastoreApi "Fetches applications for criminal legal aid"
+        autoLayout
+        description "Summarises how the crime apply application talks to crime review and MAAT"
+
+      
+        }
+        
+        systemContext cda "cdaContext" {
+           include *
+           autoLayout
+        }
+
+        container cda "CDA" {
+            include *
+            autoLayout
+        }
+        container crimeApply "CrimeApplyContainer" {
+            include *
+            autoLayout
+        }
+        container crimeReview "CrimeReviewContainer" {
             include *
             autoLayout
         }
