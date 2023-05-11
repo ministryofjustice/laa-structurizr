@@ -459,7 +459,12 @@ workspace "LAA digital" {
 
         //test for plantUML injection
         image component1 {
-            mermaid https://raw.githubusercontent.com/structurizr/dsl/master/docs/cookbook/image-view/component1.mmd
+            //mermaid https://raw.githubusercontent.com/structurizr/dsl/master/docs/cookbook/image-view/component1.mmd
+            //mermaid https://raw.githubusercontent.com/ministryofjustice/laa-maat-court-data-api/mermaid-to-sctructurizr-test/sequence-diagrams/link/link-validate.mmd
+            //mermaid https://raw.githubusercontent.com/ministryofjustice/laa-maat-court-data-api/mermaid-to-sctructurizr-test/sequence-diagrams/link/link-validate.mmd
+            mermaid https://raw.githubusercontent.com/tariqhossain/test/main/link-validate-2.md
+            //mermaid https://raw.githubusercontent.com/ministryofjustice/laa-maat-court-data-api/main/sequence-diagrams/link/link-validate.md
+
             title "Class diagram for Component1"
         }
 
