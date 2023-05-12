@@ -416,6 +416,12 @@ workspace "LAA digital" {
             include *
             autoLayout
         }
+
+        systemLandscape landscapecrimeapps {
+            include 1
+            autoLayout
+        }
+
          dynamic crimeapply "CrimeApps" "Summarises how the crime apply application talks to crime review and MAAT" {
             crimeApplyApp -> portal "Authenticates provider users through [SAML]"
         crimeReviewApp -> azure "Authenticates caseworker users through"
@@ -427,6 +433,7 @@ workspace "LAA digital" {
             maatApi -> crimeDatastoreApi "Fetches applications for criminal legal aid"
         autoLayout
         description "Summarises how the crime apply application talks to crime review and MAAT"
+
 
       
         }
